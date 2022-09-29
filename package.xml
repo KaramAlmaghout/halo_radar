@@ -11,6 +11,8 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>marine_sensor_msgs</depend>
   <depend>roscpp</depend>
+  <depend>tf2_msgs</depend>
+  <depend>geometry_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

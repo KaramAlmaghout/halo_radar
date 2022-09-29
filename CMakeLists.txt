@@ -6,6 +6,8 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     marine_sensor_msgs
+    tf2_msgs
+    geometry_msgs
 )
 
 catkin_package(
@@ -24,9 +26,14 @@ set (SOURCES
     src/halo_radar/halo_radar_node.cpp
 )
 
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}
 )
+
+add_executable(halo_rviz src/halo_rviz.cpp)
+add_dependencies(halo_rviz ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(halo_rviz ${catkin_LIBRARIES})
