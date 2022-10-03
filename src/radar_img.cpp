@@ -1,6 +1,6 @@
 /**
  * @file radar_img.cpp
- * @author Karam
+ * @author Karam Almaghout
  * @brief 
  * @version 0.1
  * @date 2022-10-03
@@ -62,6 +62,13 @@ class radar_img {
         cv::waitKey(1);
     }
 
+    void cartesianImg()
+    {
+        // TO DO:
+        //  convert intes_matrix to cartesian coordinate
+        
+    }
+
 };
 int main (int argc, char **argv)
 {
@@ -69,4 +76,4 @@ int main (int argc, char **argv)
     ros::NodeHandle nh;
     radar_img nc = radar_img(&nh);
     ros::spin();
-}
+}radar_img
