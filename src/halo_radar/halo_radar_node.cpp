@@ -40,6 +40,9 @@ class RosRadar : public halo_radar::Radar
         rsl.intensities.push_back(i);
       rs.scanlines.push_back(rsl);
     }
+    //
+    std::cout<<"no. detected objects: "<< sizeof(scanlines) << std::endl;
+    //
     m_data_pub.publish(rs);
   }
 

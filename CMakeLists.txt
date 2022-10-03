@@ -3,11 +3,16 @@ project(halo_radar)
 
 add_compile_options(-std=c++11)
 
+
+set(OpenCV_DIR "/usr/share/OpenCV/")
+
+
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     marine_sensor_msgs
     tf2_msgs
     geometry_msgs
+    OpenCV
 )
 
 catkin_package(
@@ -19,6 +24,7 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_DIR}
 )
 
 set (SOURCES
@@ -37,3 +43,7 @@ target_link_libraries(${PROJECT_NAME}
 add_executable(halo_rviz src/halo_rviz.cpp)
 add_dependencies(halo_rviz ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(halo_rviz ${catkin_LIBRARIES})
+add_executable(radar_img src/radar_img.cpp)
+add_dependencies(radar_img ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(radar_img ${OpenCV_LIBRARIES}  ${catkin_LIBRARIES})
+

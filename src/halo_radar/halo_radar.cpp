@@ -276,7 +276,7 @@ void Radar::dataThread()
         if(nbytes > 0)
         {
             RawSector *sector = reinterpret_cast<RawSector*>(in_data);
-            //std::cerr << "sector stuff: " << int(sector->stuff[0]) << ", " << int(sector->stuff[1]) << ", " << int(sector->stuff[2]) << ", " << int(sector->stuff[3]) << ", " << int(sector->stuff[4]) << std::endl;
+            std::cerr << "sector stuff: " << int(sector->stuff[0]) << ", " << int(sector->stuff[1]) << ", " << int(sector->stuff[2]) << ", " << int(sector->stuff[3]) << ", " << int(sector->stuff[4]) << std::endl;
             std::vector<Scanline> scanlines;
             for(int i = 0; i < sector->scanline_count; i++)
             {
@@ -293,6 +293,7 @@ void Radar::dataThread()
                     s.angle = sector->lines[i].angle*360.0/4096.0;
                     for(int j = 0; j < 512; j++)
                     {
+                        
                         s.intensities.push_back(sector->lines[i].data[j]&0x0f);
                         s.intensities.push_back((sector->lines[i].data[j]&0xf0)>>4);
                     }
