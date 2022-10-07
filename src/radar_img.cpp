@@ -90,15 +90,15 @@ class radar_img {
          * 
          */
 
-        cv::Mat cart_img = cv::Mat::zeros((int) intes_img.rows*2.4,(int) intes_img.rows*2.4,CV_8UC1);
+        cv::Mat cart_img = cv::Mat::zeros((int) intes_img.rows*2.3,(int) intes_img.rows*2.3,CV_8UC1);
         int x_ = 0;
         int y_ = 0;
         for (int i = 0; i < intes_img.cols; i++)
         {
             for (int j=0; j < intes_img.rows; j++)
             {
-                x_ = (int) (j*cos(-i*M_PI/1800) + ((cart_img.rows)/2));
-                y_ = (int) (j*sin(-i*M_PI/1800) + ((cart_img.cols)/2));
+                x_ = (int) (j*cos(M_PI+i*M_PI/1800) + ((cart_img.rows)/2));
+                y_ = (int) (j*sin(M_PI+i*M_PI/1800) + ((cart_img.cols)/2));
                 cart_img.at<__uint8_t>(x_ , y_) =  intes_img.at<__uint8_t>(j,i);
             }
         }
@@ -107,7 +107,7 @@ class radar_img {
         cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5));
         
         cv::dilate( cart_img, cart_img, element,cv::Point(-1,-1), 3);
-        cv::resize(cart_img, cart_img, cv::Size(), 0.75, 0.75, cv::INTER_AREA);
+        cv::resize(cart_img, cart_img, cv::Size(), 0.5, 0.5, cv::INTER_CUBIC);
         // imshow( "CART_img", cart_img);
         // cv::waitKey(10);
         colorizeImg(cart_img);
@@ -156,12 +156,22 @@ class radar_img {
     void contourObjects(cv::Mat rgb_img)
     {
         cv::Mat gray_img;
+        cv::Mat info_img = cv::Mat::zeros((int) 40,(int) rgb_img.cols,CV_8UC3);
+        cv::Mat disp_img = cv::Mat((int) rgb_img.rows, rgb_img.cols,CV_8UC3);
+        disp_img.setTo(cv::Scalar(150, 60, 5));
+        
+        cv::Mat output_img = cv::Mat::zeros((int) rgb_img.rows + info_img.rows,(int) rgb_img.cols,CV_8UC3);
         std::vector<std::vector<cv::Point>> contours;
         std::vector<cv::Vec4i> hierarchy;
         std::vector<cv::Point> centers; 
         cv::RotatedRect minRect;
 
         cv::cvtColor(rgb_img, gray_img, CV_BGR2GRAY);
+        cv::Point radar_center(gray_img.cols/2, gray_img.rows/2);
+        cv::circle(disp_img, radar_center, (rgb_img.rows/2.1), cv::Scalar(0, 150, 0), 1, 8, 0);
+        
+        cv::line( disp_img, radar_center, cv::Point(rgb_img.cols/2, rgb_img.cols/2-rgb_img.cols/2.1), cv::Scalar(0, 150, 0), 1 );
+        cv::circle(disp_img, radar_center, 2, cv::Scalar(0, 0, 255), -1, 8, 0);
         cv::findContours( gray_img, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
         cv::Moments moment_;
 
@@ -170,24 +180,37 @@ class radar_img {
                 moment_ = cv::moments( contours[i], false );
                 if (moment_.m00 != 0)
                 {
+                    cv::drawContours(disp_img, contours, i,cv::Scalar(3, 28, 247), cv::FILLED, 8, hierarchy);
                     cv::Point center((int) moment_.m10/moment_.m00, (int) moment_.m01/moment_.m00);
-                    if (abs(center.x -  gray_img.cols/2) < 5 && abs(center.y -  gray_img.rows/2) < 5)
+                    if (abs(center.x -  gray_img.cols/2) < 2 && abs(center.y -  gray_img.rows/2) < 2)
                         continue;
                     centers.push_back(center);
-                    cv::circle( rgb_img, center, 4, cv::Scalar(255, 255, 0), -1, 8, 0);
+                    cv::circle( disp_img, center, 2, cv::Scalar(150, 240, 0), -1, 8, 0);
                     minRect = cv::minAreaRect( contours[i] );
                     cv::Point2f rect_points[4];
                     minRect.points( rect_points );
                     for ( int j = 0; j < 4; j++ )
                     {
-                        cv::line( rgb_img, rect_points[j], rect_points[(j+1)%4], cv::Scalar(0, 255, 255), 2);
+                        cv::line( disp_img, rect_points[j], rect_points[(j+1)%4], cv::Scalar(0, 255, 255), 1);
                     }
                 }            
             }
-        cv::line( rgb_img, cv::Point(0, rgb_img.rows-40), cv::Point(rgb_img.cols-1, rgb_img.rows-40), cv::Scalar(255, 255, 255), 3 );
-        cv::putText(rgb_img,"Range: "+std::to_string((int)range)+"m",cv::Point(5,rgb_img.rows-10),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(255,255,255),2,false);
-        imshow( "contour_img", rgb_img);
+        
+        // // create temporary image that will hold the mask
+        // Mat mask_image( your_image.size(), CV_8U, Scalar(0));
+        // // draw your contour in mask
+        // drawContours(mask_image, contours, ind, Scalar(255), CV_FILLED);
+        // // copy only non-zero pixels from your image to original image
+        // your_image.copyTo(original_image, mask_image);
+        cv::line( info_img, cv::Point(0, 0), cv::Point(rgb_img.cols-1, 0), cv::Scalar(255, 255, 255), 2 );
+        cv::putText(info_img,"Range: "+std::to_string((int)range)+"m",cv::Point(5,info_img.rows-10),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(255,255,255),1,false);
+        
+        
+        info_img.copyTo(output_img(cv::Rect(0, rgb_img.rows, info_img.cols, info_img.rows)));
+        disp_img.copyTo(output_img(cv::Rect(0, 0, rgb_img.cols, rgb_img.rows )));
+        imshow( "contour_img", output_img);
         cv::waitKey(1);
+        
     }
 
 };

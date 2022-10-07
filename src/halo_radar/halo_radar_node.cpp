@@ -35,7 +35,8 @@ class RosRadar : public halo_radar::Radar
     {
       marine_sensor_msgs::RadarScanline rsl;
       rsl.angle = 2.0*M_PI*(360-sl.angle)/360.0;
-      rsl.range = m_rangeCorrectionFactor * sl.range;
+      // rsl.range = m_rangeCorrectionFactor * sl.range;
+      rsl.range = sl.range;
       for (auto i : sl.intensities)
         rsl.intensities.push_back(i);
       rs.scanlines.push_back(rsl);
@@ -158,7 +159,8 @@ class RosRadar : public halo_radar::Radar
   ros::Subscriber m_state_change_sub;
   ros::Timer m_heartbeatTimer;
 
-  double m_rangeCorrectionFactor = 1.024;
+  // double m_rangeCorrectionFactor = 1.024;
+  double m_rangeCorrectionFactor = 1.0;
   std::string m_frame_id = "radar";
 };
 
