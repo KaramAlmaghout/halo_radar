@@ -245,7 +245,7 @@ int main (int argc, char **argv)
     ros::init(argc, argv, "radar_img");
     ros::NodeHandle nh;
     radar_img nc = radar_img(&nh);
-    cv::namedWindow("radar_img",cv::WINDOW_KEEPRATIO);
+    cv::namedWindow("radar_img");
     cv::setMouseCallback("radar_img",radar_img::onMouse, 0);
     ros::spin();
 }
