@@ -14,17 +14,21 @@
 #include "marine_sensor_msgs/RadarSector.h"
 #include <opencv2/opencv.hpp>
 #include <cmath>
-
+cv::Mat output_img;
+double range = 0;
+int x_ = 0, target_x = 0;
+int y_ = 0, target_y = 0;
 class radar_img {
     private:
     int sector_size = 1;
     ros::Publisher pub_img;
     ros::Subscriber sector_subscriber;
     cv::Mat intes_matrix = cv::Mat::zeros(512,int(3600),CV_8UC1);
-    cv::Mat dst;
+    cv::Mat disp_img;
+    
     double phi_ = 0;
     int phi = 0;
-    double range = 0;
+    
     double phi0_ = 10000.0;
     public:
 
@@ -32,8 +36,19 @@ class radar_img {
         sector_subscriber = nh->subscribe("/radar/HaloA/data", 1000, &radar_img::sectorCallback, this);
     }
 
+    static void onMouse(int event,int x,int y,int,void*)
+    {
+        //this function will be called every time you move your mouse over the image
+        // the coordinates will be in x and y variables
+        x_ = x;
+        y_ = y;
 
-    void sectorCallback(const marine_sensor_msgs::RadarSector& msg) {
+        
+        
+    }
+
+    void sectorCallback(const marine_sensor_msgs::RadarSector& msg) 
+    {
       /**
        * @brief build 2D matrix, rows = intensity array length, columns = angle range
        * 
@@ -73,7 +88,7 @@ class radar_img {
         // cv::resize(intes_matrix, dst, cv::Size(), 0.25, 0.25, cv::INTER_AREA);
         // imshow( "radar_img", dst );
         // cv::waitKey(1);
-        if (pub_flag)
+        // if (pub_flag)
         {
             // phi0_ = 10000.0;
             cartesianImg(intes_matrix);
@@ -156,11 +171,11 @@ class radar_img {
     void contourObjects(cv::Mat rgb_img)
     {
         cv::Mat gray_img;
-        cv::Mat info_img = cv::Mat::zeros((int) 40,(int) rgb_img.cols,CV_8UC3);
-        cv::Mat disp_img = cv::Mat((int) rgb_img.rows, rgb_img.cols,CV_8UC3);
+        cv::Mat info_img = cv::Mat::zeros((int) 80,(int) rgb_img.cols,CV_8UC3);
+        disp_img = cv::Mat((int) rgb_img.rows, rgb_img.cols,CV_8UC3);
         disp_img.setTo(cv::Scalar(150, 60, 5));
         
-        cv::Mat output_img = cv::Mat::zeros((int) rgb_img.rows + info_img.rows,(int) rgb_img.cols,CV_8UC3);
+        output_img = cv::Mat::zeros((int) rgb_img.rows + info_img.rows,(int) rgb_img.cols,CV_8UC3);
         std::vector<std::vector<cv::Point>> contours;
         std::vector<cv::Vec4i> hierarchy;
         std::vector<cv::Point> centers; 
@@ -204,11 +219,21 @@ class radar_img {
         // your_image.copyTo(original_image, mask_image);
         cv::line( info_img, cv::Point(0, 0), cv::Point(rgb_img.cols-1, 0), cv::Scalar(255, 255, 255), 2 );
         cv::putText(info_img,"Range: "+std::to_string((int)range)+"m",cv::Point(5,info_img.rows-10),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(255,255,255),1,false);
+        if (x_ >= 0 && y_ >= 0 && x_ < disp_img.cols && y_ < disp_img.rows) 
+        {
+            cv::line(disp_img,cv::Point(x_,0),cv::Point(x_,disp_img.cols),cv::Scalar(0,255,0),2);
+            cv::line(disp_img,cv::Point(0,y_),cv::Point(disp_img.rows,y_),cv::Scalar(0,255,0),2);
+            target_x = (int)(x_ - disp_img.cols/2)*(range/disp_img.cols);
+            target_y = (int)(y_ - disp_img.rows/2)*(range/disp_img.rows);
+            cv::putText(info_img,"target: x:"+std::to_string(-target_y)+", y:"+std::to_string(-target_x),cv::Point(5,info_img.rows-50),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(255,255,255),1,false);
+        
+        }
         
         
         info_img.copyTo(output_img(cv::Rect(0, rgb_img.rows, info_img.cols, info_img.rows)));
         disp_img.copyTo(output_img(cv::Rect(0, 0, rgb_img.cols, rgb_img.rows )));
-        imshow( "contour_img", output_img);
+        // imshow( "radar_img", output_img);
+        cv::imshow("radar_img",output_img);
         cv::waitKey(1);
         
     }
@@ -216,8 +241,11 @@ class radar_img {
 };
 int main (int argc, char **argv)
 {
+    
     ros::init(argc, argv, "radar_img");
     ros::NodeHandle nh;
     radar_img nc = radar_img(&nh);
+    cv::namedWindow("radar_img",cv::WINDOW_KEEPRATIO);
+    cv::setMouseCallback("radar_img",radar_img::onMouse, 0);
     ros::spin();
 }
