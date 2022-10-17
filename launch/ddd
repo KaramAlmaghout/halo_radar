@@ -1,0 +1,15 @@
+ <!-- set range -->
+  <node pkg="rostopic" type="rostopic" name="radar_control1" args="pub $(arg topic_name) marin_sensors_msgs/RadarControlValue 'key: 'range' value: '1000''" output="screen"/>
+
+  <!-- scan speed -->
+  <node pkg="rostopic" type="rostopic" name="radar_control2" args="pub $(arg topic_name) marin_sensors_msgs/RadarControlValue 'key: 'scan_speed' value: 'high''" output="screen"/>
+  
+  <!-- noise reduction -->
+  <node pkg="rostopic" type="rostopic" name="radar_control3" args="pub $(arg topic_name) marin_sensors_msgs/RadarControlValue 'key: 'noise_rejection' value: $(arg noise_rejection)'" output="screen"/>
+  
+  <!-- target seperation -->
+  <node pkg="rostopic" type="rostopic" name="radar_control4" args="pub $(arg topic_name) marin_sensors_msgs/RadarControlValue 'key: 'target_separation' value: $(arg target_separation)'" output="screen"/>
+  
+  <!-- doppler mode -->
+  <node pkg="rostopic" type="rostopic" name="radar_control5" args="pub $(arg topic_name) marin_sensors_msgs/RadarControlValue 'key: 'doppler_mode' value: $(arg doppler_mode)'" output="screen"/>
+  

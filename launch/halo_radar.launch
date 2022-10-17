@@ -1,0 +1,22 @@
+<launch>
+
+  <!-- run the node -->
+  <node name="halo_radar" pkg="halo_radar" type="halo_radar" output="log"/>
+  
+  <arg name="topic_name"     default="/radar/HaloA/change_state"/>
+  <arg name="status"     default="transmit"/>
+  <arg name="range"     default="1000"/>
+  <arg name="speed"     default="high"/>
+  <arg name="noise_rejection"     default="high"/>
+  <arg name="target_separation"     default="medium"/>
+  <arg name="doppler_mode"     default="normal"/>
+  
+  <!-- start trnsmitting -->
+  <!-- <node pkg="rostopic" type="rostopic" name="radar_control" args="pub -1 $(arg topic_name) marin_sensors_msgs/RadarControlValue 'key: 'status' value: 'transmit''" /> -->
+  
+   <node pkg="rostopic" type="rostopic" name="radar_control" args="pub $(arg topic_name) marin_sensors_msgs/RadarControlValue '{key: 'status', value: 'transmit'}' -r 1" />
+
+
+
+
+</launch>

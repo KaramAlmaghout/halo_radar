@@ -23,7 +23,7 @@ class radar_img {
     int sector_size = 1;
     ros::Publisher pub_img;
     ros::Subscriber sector_subscriber;
-    cv::Mat intes_matrix = cv::Mat::zeros(512,int(3600),CV_8UC1);
+    cv::Mat intes_matrix = cv::Mat::zeros(1024,int(3600),CV_8UC1);
     cv::Mat disp_img;
     
     double phi_ = 0;
@@ -33,7 +33,7 @@ class radar_img {
     public:
 
     radar_img(ros::NodeHandle *nh) {
-        sector_subscriber = nh->subscribe("/radar/HaloA/data", 1000, &radar_img::sectorCallback, this);
+        sector_subscriber = nh->subscribe("/radar/HaloA/data", 10, &radar_img::sectorCallback, this);
     }
 
     static void onMouse(int event,int x,int y,int,void*)
@@ -75,9 +75,10 @@ class radar_img {
             range = line_.range;
             phi = (int) (phi_*10);
             phi = (int) (phi/sector_size);
-            for (int j = 0; j < 512; j+=2)
+            for (int j = 0; j < 1024; j+=1)
             {
-                intes_matrix.at<__uint8_t>(j,phi) = (uint8_t) line_.intensities[j+1]  << 4 | (uint8_t) line_.intensities[j];
+                // intes_matrix.at<__uint8_t>(j,phi) = (uint8_t) line_.intensities[j+1]  << 4 | (uint8_t) line_.intensities[j];
+                intes_matrix.at<__uint8_t>(j,phi) = (uint8_t) line_.intensities[j];
 
             } 
             
@@ -122,7 +123,7 @@ class radar_img {
         cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5));
         
         cv::dilate( cart_img, cart_img, element,cv::Point(-1,-1), 3);
-        cv::resize(cart_img, cart_img, cv::Size(), 0.5, 0.5, cv::INTER_CUBIC);
+        cv::resize(cart_img, cart_img, cv::Size(), 0.25, 0.25, cv::INTER_CUBIC);
         // imshow( "CART_img", cart_img);
         // cv::waitKey(10);
         colorizeImg(cart_img);
@@ -245,7 +246,7 @@ int main (int argc, char **argv)
     ros::init(argc, argv, "radar_img");
     ros::NodeHandle nh;
     radar_img nc = radar_img(&nh);
-    cv::namedWindow("radar_img");
+    cv::namedWindow("radar_img", cv::WINDOW_NORMAL );
     cv::setMouseCallback("radar_img",radar_img::onMouse, 0);
     ros::spin();
 }

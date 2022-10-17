@@ -192,6 +192,7 @@ int main(int argc, char **argv)
   std::future<void> scanResult = std::async(std::launch::async, [&] {
     while(radars.empty())
     {
+      ros::Duration(0.2).sleep();
       std::vector<halo_radar::AddressSet> as;
       if(hostIPs.empty())
         as = halo_radar::scan();
