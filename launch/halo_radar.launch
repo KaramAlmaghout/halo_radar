@@ -14,7 +14,7 @@
   <!-- start trnsmitting -->
   <!-- <node pkg="rostopic" type="rostopic" name="radar_control" args="pub -1 $(arg topic_name) marin_sensors_msgs/RadarControlValue 'key: 'status' value: 'transmit''" /> -->
   
-   <node pkg="rostopic" type="rostopic" name="radar_control" args="pub $(arg topic_name) marin_sensors_msgs/RadarControlValue '{key: 'status', value: 'transmit'}' -r 1" />
+   <node pkg="rostopic" type="rostopic" name="radar_control" args="pub $(arg topic_name) marin_sensors_msgs/RadarControlValue {'key: 'status', value: 'transmit''} -r 1" />
 
 
 

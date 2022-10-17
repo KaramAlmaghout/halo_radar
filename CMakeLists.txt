@@ -9,6 +9,7 @@ set(OpenCV_DIR "/usr/share/OpenCV/")
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
+    rospy
     marine_sensor_msgs
     tf2_msgs
     geometry_msgs
@@ -47,3 +48,6 @@ add_executable(radar_img src/radar_img.cpp)
 add_dependencies(radar_img ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(radar_img ${OpenCV_LIBRARIES}  ${catkin_LIBRARIES})
 
+catkin_install_python(PROGRAMS scripts/input_node.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
