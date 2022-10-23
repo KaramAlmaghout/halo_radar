@@ -3,13 +3,8 @@
   <!-- run the node -->
   <node name="halo_radar" pkg="halo_radar" type="halo_radar" output="log"/>
   
-  <!-- <arg name="topic_name"     default="/radar/HaloA/change_state"/> -->
   <arg name="status"     default="transmit"/>
   <arg name="range"     default="1000"/>
-  <!-- <arg name="speed"     default="high"/>
-  <arg name="noise_rejection"     default="high"/>
-  <arg name="target_separation"     default="medium"/>
-  <arg name="doppler_mode"     default="normal"/> -->
   
   <node name="ctrl_radar" pkg="halo_radar" type="ctrl_radar.py" args="$(arg status) $(arg range)" output="screen"/>
 
