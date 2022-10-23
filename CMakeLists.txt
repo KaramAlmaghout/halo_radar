@@ -48,6 +48,6 @@ add_executable(radar_img src/radar_img.cpp)
 add_dependencies(radar_img ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(radar_img ${OpenCV_LIBRARIES}  ${catkin_LIBRARIES})
 
-catkin_install_python(PROGRAMS scripts/input_node.py
+catkin_install_python(PROGRAMS scripts/ctrl_radar.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
