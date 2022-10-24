@@ -12,6 +12,8 @@
 #include "ros/ros.h"
 #include "marine_sensor_msgs/RadarScanline.h"
 #include "marine_sensor_msgs/RadarSector.h"
+#include "autoware_msgs/DetectedObject.h"
+#include "autoware_msgs/DetectedObjectArray.h"
 #include <opencv2/opencv.hpp>
 #include <cmath>
 cv::Mat output_img;
@@ -250,7 +252,38 @@ class radar_img {
         
     }
 
-};
+}
+
+void DetectedObjPub(cv::Mat img, std::vector<std::vector<cv::Point>> cnts)
+{
+    cv::Moments moment_;
+    cv::Point center; 
+    cv::RotatedRect minRect;
+    autoware_msgs::DetectedObjectArray detected_obj_array_;
+
+    for( int i = 0; i < cnts.size(); i++ )
+        {  
+            moment_ = cv::moments( cnts[i], false );
+            if (moment_.m00 != 0)
+            {
+                center((int) moment_.m10/moment_.m00, (int) moment_.m01/moment_.m00);
+                if (abs(center.x -  img.cols/2) < 2 && abs(center.y -  img.rows/2) < 2)
+                    continue;
+                minRect = cv::minAreaRect( contours[i] );
+                cv::Point2f rect_points[4];
+                minRect.points( rect_points );
+                // for ( int j = 0; j < 4; j++ )
+                // {
+                //     cv::line( disp_img, rect_points[j], rect_points[(j+1)%4], cv::Scalar(0, 255, 255), 1);
+                // }
+            }            
+        }
+
+
+}
+
+
+
 int main (int argc, char **argv)
 {
     

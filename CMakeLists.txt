@@ -14,12 +14,13 @@ find_package(catkin REQUIRED COMPONENTS
     tf2_msgs
     geometry_msgs
     OpenCV
+    autoware_msgs
 )
 
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES 
-   CATKIN_DEPENDS marine_sensor_msgs
+   CATKIN_DEPENDS marine_sensor_msgs autoware_msgs
 #  DEPENDS system_lib
 )
 
