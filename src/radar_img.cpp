@@ -16,8 +16,8 @@
 #include <cmath>
 cv::Mat output_img;
 double range = 0;
-int x_ = 0, target_x = 0;
-int y_ = 0, target_y = 0;
+int x_obj = 0, target_x = 0;
+int y_obj = 0, target_y = 0;
 class radar_img {
     private:
     int sector_size = 1;
@@ -40,8 +40,8 @@ class radar_img {
     {
         //this function will be called every time you move your mouse over the image
         // the coordinates will be in x and y variables
-        x_ = x;
-        y_ = y;
+        x_obj = x;
+        y_obj = y;
 
         
         
@@ -78,7 +78,8 @@ class radar_img {
             for (int j = 0; j < 1024; j+=1)
             {
                 // intes_matrix.at<__uint8_t>(j,phi) = (uint8_t) line_.intensities[j+1]  << 4 | (uint8_t) line_.intensities[j];
-                intes_matrix.at<__uint8_t>(j,phi) = (uint8_t) line_.intensities[j];
+                if ((uint8_t) line_.intensities[j] > 4)
+                    intes_matrix.at<__uint8_t>(j,phi) = (uint8_t) line_.intensities[j];
 
             } 
             
@@ -106,7 +107,7 @@ class radar_img {
          * 
          */
 
-        cv::Mat cart_img = cv::Mat::zeros((int) intes_img.rows*2.3,(int) intes_img.rows*2.3,CV_8UC1);
+        cv::Mat cart_img = cv::Mat::zeros((int) intes_img.rows*2,(int) intes_img.rows*2,CV_8UC1);
         int x_ = 0;
         int y_ = 0;
         for (int i = 0; i < intes_img.cols; i++)
@@ -119,11 +120,14 @@ class radar_img {
             }
         }
         
-
-        cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5));
+        cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 3, 3));
         
-        cv::dilate( cart_img, cart_img, element,cv::Point(-1,-1), 3);
-        cv::resize(cart_img, cart_img, cv::Size(), 0.25, 0.25, cv::INTER_CUBIC);
+        cv::erode( cart_img, cart_img, element,cv::Point(-1,-1), 1);
+        cv::Mat element1 = cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 9, 9));
+        
+        cv::dilate( cart_img, cart_img, element1,cv::Point(-1,-1), 4);
+        cv::erode( cart_img, cart_img, element1,cv::Point(-1,-1), 1);
+        cv::resize(cart_img, cart_img, cv::Size(), 0.3, 0.3, cv::INTER_AREA);
         // imshow( "CART_img", cart_img);
         // cv::waitKey(10);
         colorizeImg(cart_img);
@@ -175,7 +179,7 @@ class radar_img {
         cv::Mat info_img = cv::Mat::zeros((int) 80,(int) rgb_img.cols,CV_8UC3);
         disp_img = cv::Mat((int) rgb_img.rows, rgb_img.cols,CV_8UC3);
         disp_img.setTo(cv::Scalar(150, 60, 5));
-        
+        // imshow( "radar_img", rgb_img);
         output_img = cv::Mat::zeros((int) rgb_img.rows + info_img.rows,(int) rgb_img.cols,CV_8UC3);
         std::vector<std::vector<cv::Point>> contours;
         std::vector<cv::Vec4i> hierarchy;
@@ -184,10 +188,14 @@ class radar_img {
 
         cv::cvtColor(rgb_img, gray_img, CV_BGR2GRAY);
         cv::Point radar_center(gray_img.cols/2, gray_img.rows/2);
-        cv::circle(disp_img, radar_center, (rgb_img.rows/2.1), cv::Scalar(0, 150, 0), 1, 8, 0);
+        cv::circle(disp_img, radar_center, (rgb_img.rows/2.1), cv::Scalar(0, 150, 0), 2, 8, 0);
         
         cv::line( disp_img, radar_center, cv::Point(rgb_img.cols/2, rgb_img.cols/2-rgb_img.cols/2.1), cv::Scalar(0, 150, 0), 1 );
         cv::circle(disp_img, radar_center, 2, cv::Scalar(0, 0, 255), -1, 8, 0);
+        if (range > 700)
+            cv::circle(disp_img, radar_center, (int)(500*(disp_img.cols/2)/range), cv::Scalar(0, 150, 0), 1, 8, 0);
+        if (range >= 1500)
+            cv::circle(disp_img, radar_center, (int)(1000*(disp_img.cols/2)/range), cv::Scalar(0, 150, 0), 1, 8, 0);
         cv::findContours( gray_img, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
         cv::Moments moment_;
 
@@ -218,15 +226,18 @@ class radar_img {
         // drawContours(mask_image, contours, ind, Scalar(255), CV_FILLED);
         // // copy only non-zero pixels from your image to original image
         // your_image.copyTo(original_image, mask_image);
+        int obj_range;
         cv::line( info_img, cv::Point(0, 0), cv::Point(rgb_img.cols-1, 0), cv::Scalar(255, 255, 255), 2 );
         cv::putText(info_img,"Range: "+std::to_string((int)range)+"m",cv::Point(5,info_img.rows-10),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(255,255,255),1,false);
-        if (x_ >= 0 && y_ >= 0 && x_ < disp_img.cols && y_ < disp_img.rows) 
+        if (x_obj >= 0 && y_obj >= 0 && x_obj < disp_img.cols && y_obj < disp_img.rows) 
         {
-            cv::line(disp_img,cv::Point(x_,0),cv::Point(x_,disp_img.cols),cv::Scalar(0,255,0),2);
-            cv::line(disp_img,cv::Point(0,y_),cv::Point(disp_img.rows,y_),cv::Scalar(0,255,0),2);
-            target_x = (int)(x_ - disp_img.cols/2)*(range/disp_img.cols);
-            target_y = (int)(y_ - disp_img.rows/2)*(range/disp_img.rows);
-            cv::putText(info_img,"target: x:"+std::to_string(-target_y)+", y:"+std::to_string(-target_x),cv::Point(5,info_img.rows-50),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(255,255,255),1,false);
+            // cv::line(disp_img,cv::Point(x_obj,0),cv::Point(x_obj,disp_img.cols),cv::Scalar(0,255,0),2);
+            // cv::line(disp_img,cv::Point(0,y_obj),cv::Point(disp_img.rows,y_obj),cv::Scalar(0,255,0),2);
+            cv::line(disp_img,cv::Point((int) disp_img.cols/2,(int) disp_img.rows/2),cv::Point(x_obj,y_obj),cv::Scalar(0,255,255),1);
+            target_x = (int)(x_obj - disp_img.cols/2)*(range/(disp_img.cols/2));
+            target_y = (int)(y_obj - disp_img.rows/2)*(range/(disp_img.rows/2));
+            obj_range = round(sqrtf(pow(target_x,2)+pow(target_y,2)));
+            cv::putText(info_img,"target: x:"+std::to_string(-target_y)+", y:"+std::to_string(-target_x)+", r: "+std::to_string(obj_range)+"m",cv::Point(5,info_img.rows-50),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(255,255,255),1,false);
         
         }
         
