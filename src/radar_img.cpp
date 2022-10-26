@@ -23,7 +23,7 @@ int y_obj = 0, target_y = 0;
 class radar_img {
     private:
     int sector_size = 1;
-    ros::Publisher pub_img;
+    ros::Publisher pub_img,obj_array_publisher;
     ros::Subscriber sector_subscriber;
     cv::Mat intes_matrix = cv::Mat::zeros(1024,int(3600),CV_8UC1);
     cv::Mat disp_img;
@@ -36,6 +36,7 @@ class radar_img {
 
     radar_img(ros::NodeHandle *nh) {
         sector_subscriber = nh->subscribe("/radar/HaloA/data", 10, &radar_img::sectorCallback, this);
+        obj_array_publisher = nh->advertise<autoware_msgs::DetectedObjectArray>("/radar/DetectedObjects", 10);
     }
 
     static void onMouse(int event,int x,int y,int,void*)
@@ -247,18 +248,21 @@ class radar_img {
         info_img.copyTo(output_img(cv::Rect(0, rgb_img.rows, info_img.cols, info_img.rows)));
         disp_img.copyTo(output_img(cv::Rect(0, 0, rgb_img.cols, rgb_img.rows )));
         // imshow( "radar_img", output_img);
+        DetectedObjPub(disp_img, contours);
         cv::imshow("radar_img",output_img);
         cv::waitKey(1);
         
     }
 
-}
+
 
 void DetectedObjPub(cv::Mat img, std::vector<std::vector<cv::Point>> cnts)
 {
     cv::Moments moment_;
-    cv::Point center; 
+    // cv::Point center;
+    
     cv::RotatedRect minRect;
+    std::string frame_id = "radar_link";
     autoware_msgs::DetectedObjectArray detected_obj_array_;
 
     for( int i = 0; i < cnts.size(); i++ )
@@ -266,22 +270,55 @@ void DetectedObjPub(cv::Mat img, std::vector<std::vector<cv::Point>> cnts)
             moment_ = cv::moments( cnts[i], false );
             if (moment_.m00 != 0)
             {
-                center((int) moment_.m10/moment_.m00, (int) moment_.m01/moment_.m00);
+                autoware_msgs::DetectedObject detected_obj_;
+                float rot_angle, obj_w, obj_h, obj_cx, obj_cy;
+                cv::Point center((int) moment_.m10/moment_.m00, (int) moment_.m01/moment_.m00);
                 if (abs(center.x -  img.cols/2) < 2 && abs(center.y -  img.rows/2) < 2)
                     continue;
-                minRect = cv::minAreaRect( contours[i] );
-                cv::Point2f rect_points[4];
-                minRect.points( rect_points );
-                // for ( int j = 0; j < 4; j++ )
-                // {
-                //     cv::line( disp_img, rect_points[j], rect_points[(j+1)%4], cv::Scalar(0, 255, 255), 1);
-                // }
-            }            
+                minRect = cv::minAreaRect( cnts[i] );
+                
+                rot_angle = minRect.angle;
+                if (rot_angle == -90)
+                {
+                    rot_angle = 0;
+                }
+
+                rot_angle = -rot_angle;
+                obj_w = minRect.size.width*(range/(img.cols/2));;
+                obj_h = minRect.size.height*(range/(img.cols/2));;
+                if (rot_angle > 45)
+                {
+                    rot_angle = - rot_angle +45;
+                    obj_h = minRect.size.width*(range/(img.cols/2));;
+                    obj_w = minRect.size.height*(range/(img.cols/2));;
+                }
+                
+                obj_cy = -(int)(center.x - img.cols/2)*(range/(img.cols/2));
+                obj_cx = -(int)(center.y - img.rows/2)*(range/(img.rows/2));
+
+
+                detected_obj_.header.stamp = ros::Time();
+                detected_obj_.header.frame_id = frame_id;
+                
+                detected_obj_.pose.position.x = obj_cx;
+                detected_obj_.pose.position.y = obj_cy;
+
+                detected_obj_.pose.orientation.z = rot_angle;
+
+                detected_obj_.dimensions.x = obj_h;
+                detected_obj_.dimensions.y = obj_w;
+
+                detected_obj_array_.objects.push_back(detected_obj_);
+
+            }
+
         }
+
+        obj_array_publisher.publish(detected_obj_array_);
 
 
 }
-
+};
 
 
 int main (int argc, char **argv)
